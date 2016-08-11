@@ -3,53 +3,93 @@
 #include "include\SyntaxHighlighter.h"
 
 #include <iterator>
+#include <assert.h>
 
 #include "RegExpRule.h"
 #include "include\Brush.h"
 
 template<class V>
+bool MapRangeNotExist(std::map<Range, V>& map, const Range& range)
+{
+    auto itPair = map.equal_range(range);
+    return itPair.first == itPair.second;
+}
+
+template<class V>
+typename std::map<Range, V>::iterator MapRangeMove(std::map<Range, V>& map, typename std::map<Range, V>::iterator e, const Range& range)
+{
+    assert(range.end > range.begin);
+    V v = e->second;
+    e = map.erase(e);
+    assert(MapRangeNotExist(map, range));
+    return map.insert(e, std::map<Range, V>::value_type(range, std::move(v)));
+}
+
+template<class V>
 void MapRangeRemove(std::map<Range, V>& map, const Range& range)
 {
-    auto e = map.lower_bound(range);
-    if (!map.empty() && e != map.begin())
+    std::map<Range, V>::iterator e = map.lower_bound(range);
+    if (e != map.end() && e->first != range && e->first.begin < range.end && range.begin < e->first.end)
     {
-        const auto ep = std::prev(e);
-        if (ep->first.end > range.end)
+        if (e->first.end > range.end)
         {
-            Range rn(ep->first);
-            rn.start = range.end;
-            e = map.insert(e, std::map<Range, V>::value_type(rn, ep->second));
+            if (range.begin > e->first.begin)
+            {
+                Range rp(e->first);
+                rp.end = range.begin;
+
+                Range rn(e->first);
+                rn.begin = range.end;
+                assert(!rn.empty());
+                e = MapRangeMove(map, e, rn);
+                assert(!rp.empty());
+                map.insert(std::map<Range, V>::value_type(rp, e->second));
+                ++e;
+            }
+            else
+            {
+                Range rn(e->first);
+                rn.begin = range.end;
+                assert(!rn.empty());
+                e = std::next(MapRangeMove(map, e, rn));
+            }
         }
-        if (ep->first.end > range.start)
+        else if (e->first.end > range.begin)
         {
-            Range rp(ep->first);
-            V styleKeyp = ep->second;
-            rp.end = range.start;
-            map.erase(ep);
-            if (!rp.empty())
-                map[rp] = styleKeyp;
+            Range rn(e->first);
+            rn.end = range.begin;
+            if (rn.empty())
+                e = map.erase(e);
+            else
+                e = std::next(MapRangeMove(map, e, rn));
         }
     }
     while (e != map.end() && e->first.end <= range.end)
     {
         e = map.erase(e);
     }
-    if (e != map.end() && e->first.start < range.end)
+    if (e != map.end() && e->first.begin < range.end)
     {
         Range rn(e->first);
-        V styleKeyn = e->second;
-        e = map.erase(e);
-        rn.start = range.end;
-        if (!rn.empty())
-            map[rn] = styleKeyn;
+        rn.begin = range.end;
+        assert(!rn.empty());
+        e = MapRangeMove(map, e, rn);
     }
 }
 
 template<class V>
 void MapRangeAdd(std::map<Range, V>& map, const Range& range, const V& value)
 {
-    MapRangeRemove(map, range);
+    assert(range.end > range.begin);
+    assert(MapRangeNotExist(map, range));
     map[range] = value;
+}
+
+template<class V>
+void MapRangeOverwrite(std::map<Range, V>& map, const Range& range, const V& value)
+{
+    MapRangeRemove(map, range);
+    MapRangeAdd(map, range, value);
 }
 
 template<class CharSequence>
@@ -104,7 +144,7 @@ void SyntaxHighlighter2(SyntaxHighlighterMapT& matches, const RegExpRule& regExp
                 {
                 case RegExpRule::Op::T_STRING:
                     // add the style to the match
-                    MapRangeAdd(matches, Range(start, end), static_cast<const wchar_t*>(operation.object));
+                    MapRangeOverwrite(matches, Range(start, end), static_cast<const wchar_t*>(operation.object));
                     break;
                 case RegExpRule::Op::T_RULE:
                     // parse the result using the <code>operation</code> RegExpRule
