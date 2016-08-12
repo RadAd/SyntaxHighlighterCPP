@@ -7,9 +7,9 @@ public:
     BrushBatch()
         : Brush(L"Batch")
     {
-        String keywords = L"assoc break call cd chdir cls color copy date del dir "
-            L"echo endlocal erase exit for ftype goto graftabl if md mkdir "
-            L"mklink move path pause popd prompt pushd rd rem ren rename "
+        String keywords = L"assoc break call cd chdir cls color copy date defined del dir "
+            L"echo endlocal erase errorlevel exit for ftype goto graftabl if md mkdir "
+            L"mklink move not path pause popd prompt pushd rd rem ren rename "
             L"rmdir set setlocal shift start time title type ver verify vol";
         String devices = L"AUX COM(\\d)? CON NUL LPT(\\d)? PRN";
 

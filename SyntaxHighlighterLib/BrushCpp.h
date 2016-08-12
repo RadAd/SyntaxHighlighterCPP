@@ -31,16 +31,17 @@ public:
             L"sig_atomic_t size_t _stat __stat64 _stati64 terminate_function "
             L"time_t __time64_t _timeb __timeb64 tm uintptr_t _utimbuf "
             L"va_list wchar_t wctrans_t wctype_t wint_t signed "
-            L"std const_iterator iterator map set string vector wstring";
+            L"std const_iterator deque iterator list multimap map pair set string stringstream vector wstring wstringstream";
         String keywords = L"break case catch class const __finally __exception __try "
             L"const_cast continue private public protected __declspec "
             L"default delete deprecated dllexport dllimport do dynamic_cast "
             L"else enum explicit extern if for friend goto inline "
-            L"mutable naked namespace new noinline noreturn nothrow nullptr "
+            L"mutable naked namespace new noinline noreturn nothrow "
             L"register reinterpret_cast return selectany "
-            L"sizeof static static_cast struct switch template this "
-            L"thread throw true false try typedef typeid typename union "
+            L"sizeof static static_cast struct switch template "
+            L"thread throw try typedef typeid typename union "
             L"using uuid virtual void volatile whcar_t while";
+#if 0
         String functions = L"assert isalnum isalpha iscntrl isdigit isgraph islower isprint"
             L"ispunct isspace isupper isxdigit tolower toupper errno localeconv "
             L"setlocale acos asin atan atan2 ceil cos cosh exp fabs floor fmod "
@@ -57,14 +58,25 @@ public:
             L"strcmp strcoll strcpy strcspn strerror strlen strncat strncmp "
             L"strncpy strpbrk strrchr strspn strstr strtok strxfrm asctime "
             L"clock ctime difftime gmtime localtime mktime strftime time";
+#endif
+
+        // TODO Add something for "TODO" ???
+        // TODO Separate keyword type into other types???
+        // TODO Separate type for operators???
+        // TODO Open ended strings???
 
         add(RegExpRule(RegExpRule::singleLineCComments, COMMENTS));
         add(RegExpRule(RegExpRule::multiLineCComments, COMMENTS));
-        add(RegExpRule(RegExpRule::doubleQuotedString, STRING));
-        add(RegExpRule(RegExpRule::singleQuotedString, STRING));
-        add(RegExpRule(L"\\b([\\d]+(\\.[\\d]+)?|0x[a-f0-9]+|0b[\\d]+)\\b", Pattern::CASE_INSENSITIVE, VALUE)); // numbers
-        add(RegExpRule(L"^\\w*#.*$", Pattern::MULTILINE, PREPROCESSOR));
+        //add(RegExpRule(RegExpRule::doubleQuotedString, STRING));
+        //add(RegExpRule(RegExpRule::singleQuotedString, STRING));
+        add(RegExpRule(L"L?" L"\"([^\\\\\"\\r\\n]|\\\\.)*\"", STRING)); // "L?" + RegExpRule::doubleQuotedString
+        add(RegExpRule(L"L?" L"'([^\\\\'\\r\\n]|\\\\.)*'", STRING)); // "L?" + RegExpRule::singleQuotedString
+        add(RegExpRule(L"include\\s+(<([^\\\\'\\r\\n]|\\\\.)*>)", nullptr).addGroupOperation(STRING)); // include <>
+        add(RegExpRule(L"[+-]?\\b(\\d+(\\.\\d+)?f?|0x[a-f0-9]+|0b[\\d]+)\\b", Pattern::CASE_INSENSITIVE, VALUE)); // numbers
+        add(RegExpRule(getKeywords(L"true false nullptr this TRUE FALSE NULL"), VALUE));
+        add(RegExpRule(L"^\\s*#.*$", Pattern::MULTILINE, PREPROCESSOR));
         add(RegExpRule(getKeywords(datatypes), TYPE));
+        add(RegExpRule(L"[\\!=\\+\\-<>*&%]", KEYWORD)); // OPERATORS
         add(RegExpRule(getKeywords(keywords), KEYWORD));
         //add(RegExpRule(getKeywords(functions), FUNCTION));
         add(RegExpRule(L"\\b(\\w)+(\\s)*(?=\\()", FUNCTION));
