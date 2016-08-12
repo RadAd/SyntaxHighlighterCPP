@@ -53,8 +53,8 @@ void print(FILE* f, const CharSequence& s, const SyntaxHighlighterMapT& matches)
     {
         const Range& r = match.first;
         const String& type = match.second;
-        if (r.start > current)
-            fputws(String(s.begin() + current, s.begin() + r.start).c_str(), f);
+        if (r.begin > current)
+            fputws(String(s.begin() + current, s.begin() + r.begin).c_str(), f);
 
         const wchar_t* fg = nullptr;
         if (type == Brush::PREPROCESSOR)
@@ -84,7 +84,7 @@ void print(FILE* f, const CharSequence& s, const SyntaxHighlighterMapT& matches)
         if (fg != nullptr)
             fputws(fg, f);
 
-        fputws(String(s.begin() + r.start, s.begin() + r.end).c_str(), f);
+        fputws(String(s.begin() + r.begin, s.begin() + r.end).c_str(), f);
 
         if (fg != nullptr)
             fputws(fg_default, f);
